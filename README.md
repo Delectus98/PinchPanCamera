@@ -12,8 +12,8 @@
 
 ![Icon](https://raw.githubusercontent.com/Divirad/PinchPanCamera/master/icon.png)
 
-Godot Plugin for a touchscreen optimized camera control system for common 2D top-down strategy games. 
-(Works also with mouse when `Emulate Touch with Mouse` is enabled)
+<del>Godot Plugin for a touchscreen optimized camera control system for common 2D top-down strategy games. 
+(Works also with mouse when Emulate Touch with Mouse is enabled)</del>
 
 ![](https://thumbs.gfycat.com/TautLawfulHerald-size_restricted.gif)
 
