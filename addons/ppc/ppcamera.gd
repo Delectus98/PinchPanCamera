@@ -38,6 +38,12 @@ export var drag_deadzone_x : float = 0.1
 export var drag_deadzone_y : float = 0.1
 export var show_debug_icon : bool = false
 
+export var limit_top : int = -10000000
+export var limit_left : int = -10000000
+export var limit_right : int = 10000000
+export var limit_bottom : int = 10000000
+export var limit_smoothed : bool = true
+
 var shop
 var start_position 
 var already_pressed = false
@@ -75,12 +81,13 @@ func _enter_tree():
 	camera.smoothing_enabled = smoothing
 	camera.smoothing_speed = smoothing_speed
 	
+	set_limit(limit_top, limit_left, limit_right, limit_bottom, limit_smoothed);
+	
 	if show_debug_icon:
 		var di = load("res://addons/ppc/testicon.tscn")
 		add_child(di.instance())
 
 func _process(_delta):
-	
 	if camera.drag_margin_left != drag_deadzone_x \
 	and camera.drag_margin_right != drag_deadzone_x:
 		camera.drag_margin_left = drag_deadzone_x
@@ -110,32 +117,36 @@ func _process(_delta):
 		naturalizer = 1
 	elif !natural_slide and naturalizer != -1:
 		naturalizer = -1
+
+var required_pressed_button = false
+var required_released_button = false
 func _input(event):
-	
 	if !enable:
 		return
+	
 	# Handle MouseWheel for Zoom
-	if event is InputEventMouseButton and event.is_pressed():
-		if event.button_index == BUTTON_WHEEL_UP:
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_WHEEL_UP and event.is_pressed():
 			emit_signal("zoom_in")
 			if camera.zoom >= min_zoom:
 				camera.zoom -= Vector2(0.1, 0.1)
-		if event.button_index == BUTTON_WHEEL_DOWN:
+		if event.button_index == BUTTON_WHEEL_DOWN and event.is_pressed():
 			emit_signal("zoom_out")
 			if camera.zoom <= max_zoom:
 				camera.zoom += Vector2(0.1, 0.1)
+		required_pressed_button = (event.is_pressed() && event.button_index == BUTTON_LEFT)
+		required_released_button = (!event.is_pressed() && event.button_index == BUTTON_LEFT)
 	
 	# Handle Touch
-	if event is InputEventScreenTouch:
-		if event.is_pressed() and !already_pressed:
-			emit_signal("just_pressed")
-			start_position = get_norm_coordinate() * naturalizer
-			already_pressed = true
-		if !event.is_pressed():
-			already_pressed = false
+	if required_pressed_button and !already_pressed:
+		emit_signal("just_pressed")
+		start_position = get_norm_coordinate() * naturalizer
+		already_pressed = true
+	if required_released_button:
+		already_pressed = false
 
 	# Handles ScreenDragging
-	if event is InputEventScreenDrag:
+	if already_pressed:
 		if camera.input_count == 1:
 			emit_signal("dragging")
 			if natural_slide:
@@ -146,7 +157,6 @@ func _input(event):
 				position += coord
 	# Handles releasing
 	if  camera.input_count == 0:
-		
 		position = camera.get_camera_center() 
 		
 
@@ -170,3 +180,11 @@ func invert_vector(vec : Vector2):
 	inverts a vector
 	"""
 	return Vector2(-vec.x, -vec.y)
+	
+func set_limit(top, left, right, bottom, smoothed = true):
+	camera.limit_top = limit_top
+	camera.limit_left = limit_left
+	camera.limit_right = limit_right
+	camera.limit_bottom = limit_bottom
+	camera.limit_smoothed = limit_smoothed
+
